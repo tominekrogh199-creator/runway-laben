@@ -1,0 +1,14 @@
+{
+  "name": "runway-laben-mesh",
+  "version": "1.0.0",
+  "description": "Genererer 3D-kroppen og skoene til Runway-laben (meshdata.js)",
+  "main": "build_all.js",
+  "scripts": {
+    "build": "node build_all.js 0.0035 0.0004",
+    "build:reuse": "node build_all.js 0.0035 0.0004 reuse"
+  },
+  "dependencies": {
+    "meshoptimizer": "0.21.0"
+  },
+  "private": true
+}

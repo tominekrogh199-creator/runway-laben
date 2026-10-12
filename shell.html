@@ -1,0 +1,48 @@
+<div class="app">
+  <header class="top">
+    <svg class="mark" viewBox="0 0 26 26" aria-hidden="true"><rect x="3" y="5" width="20" height="5" rx="1" fill="#FF3D8B"/><rect x="10.5" y="9" width="5" height="13" rx="1" fill="#FF3D8B"/></svg>
+    <div><h1>Runway-laben</h1><p>Teknikken bak en verdensklasse walk, vist på 3D-modeller</p></div>
+  </header>
+  <div class="layout">
+    <section class="stage-col" aria-label="Scene">
+      <div class="stage" id="stage" aria-label="3D-modeller som går. Dra sideveis for å rotere kameraet.">
+        <canvas id="gl"></canvas>
+        <canvas id="ov"></canvas>
+        <div id="vpLabels"></div>
+        <div class="hint" id="hint">Dra sideveis for å rotere</div>
+      </div>
+      <div class="ctrl">
+        <div class="row">
+          <button class="btn-icon btn-play" id="play" type="button" aria-label="Pause"></button>
+          <div class="seg" id="speed" role="group" aria-label="Fart">
+            <button type="button" data-s="1">1×</button><button type="button" data-s="0.5">½×</button><button type="button" data-s="0.25">¼×</button>
+          </div>
+          <button class="btn-icon" id="stepB" type="button" aria-label="Ett bilde tilbake"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M11 3 5 8l6 5z" fill="currentColor"/><rect x="3" y="3" width="1.6" height="10" fill="currentColor"/></svg></button>
+          <button class="btn-icon" id="stepF" type="button" aria-label="Ett bilde frem"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m5 3 6 5-6 5z" fill="currentColor"/><rect x="11.4" y="3" width="1.6" height="10" fill="currentColor"/></svg></button>
+          <span class="tc" id="tc">00:00:00</span>
+        </div>
+        <div class="row chips" id="cams">
+          <div class="seg" id="mode" role="group" aria-label="Rute">
+            <button type="button" data-m="straight">Rett frem</button><button type="button" data-m="runway">Runway</button>
+          </div>
+        </div>
+        <div class="row">
+          <span class="row-label">Fokus</span>
+          <div class="row chips" id="focus" style="flex:1"></div>
+          <button class="btn-icon" id="zoomOut" type="button" aria-label="Zoom ut"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8h9" stroke="currentColor" stroke-width="1.8" fill="none"/></svg></button>
+          <button class="btn-icon" id="zoomIn" type="button" aria-label="Zoom inn"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8h9M8 3.5v9" stroke="currentColor" stroke-width="1.8" fill="none"/></svg></button>
+        </div>
+      </div>
+    </section>
+    <section class="lesson-col">
+      <div id="lessonTop"></div>
+      <nav class="lnav" aria-label="Velg leksjon">
+        <button class="btn-icon" id="prev" type="button" aria-label="Forrige leksjon"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></button>
+        <select id="lsel" aria-label="Leksjon"></select>
+        <button class="btn-icon" id="next" type="button" aria-label="Neste leksjon"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m6 3 5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></button>
+      </nav>
+      <div class="guides-wrap"><span class="row-label">Hjelpelinjer</span><div class="row chips" id="guideChips"></div></div>
+      <article id="lesson"></article>
+    </section>
+  </div>
+</div>
