@@ -6,6 +6,15 @@ const MANNEQUIN = (function () {
     return new T(u8.buffer);
   }
   const col = h => new THREE.Color(h).convertSRGBToLinear();
+  // visual style presets (?style=illus|toy|film overrides the default)
+  const STYLES = {
+    illus: { skin: '#F2D9CC', hair: '#2B2230', rough: [0.7, 0.8, 0.5], pants: 0.74, toon: 1, outline: 0.0032, ink: '#1B1420', suitLift: 0.0, env: 0.25 },
+    toy: { skin: '#EFE6DF', hair: '#CBBFB6', rough: [0.82, 0.86, 0.8], pants: 0.8, toon: 0, outline: 0, ink: '#000000', suitLift: 0.14, env: 0.8 },
+    film: { skin: '#E8B394', hair: '#3A2418', rough: [0.55, 0.7, 0.4], pants: 0.55, toon: 2, outline: 0.0022, ink: '#2A1A1A', suitLift: 0.06, env: 0.55 },
+  };
+  const STYLE_NAME = ((typeof location !== 'undefined' && location.search.match(/style=(\w+)/)) || [])[1] || 'illus';
+  const ST = STYLES[STYLE_NAME] || STYLES.illus;
+  const suitCol = hex => col(hex).lerp(new THREE.Color(1, 1, 1), ST.suitLift);
   let bodyGeo = null, shoeGeo = null, restInv = null, shoeRestInv = null;
 
   function buildGeometry(D, mirror) {
@@ -60,12 +69,33 @@ const MANNEQUIN = (function () {
     }
   }
 
+  // toon shading: quantise the direct light into soft bands (1 = illustration, 2 = film-like soft cel)
+  const TOON = ST.toon === 1 ? [
+    'vec3 dcol = max(diffuseColor.rgb, vec3(1e-3));',
+    'float li = dot(reflectedLight.directDiffuse / dcol, vec3(0.3333));',
+    'float bnd = 0.42 + 0.4 * smoothstep(0.08, 0.3, li) + 0.18 * smoothstep(0.7, 0.9, li);',
+    'reflectedLight.directDiffuse = diffuseColor.rgb * bnd * 1.15;',
+    'reflectedLight.indirectDiffuse = diffuseColor.rgb * 0.22;',
+    'reflectedLight.directSpecular *= 0.25; reflectedLight.indirectSpecular *= 0.35;',
+    'reflectedLight.indirectSpecular += smoothstep(0.55, 0.62, frs) * 0.18 * (diffuseColor.rgb + 0.2);',
+  ] : ST.toon === 2 ? [
+    'vec3 dcol = max(diffuseColor.rgb, vec3(1e-3));',
+    'float li = dot(reflectedLight.directDiffuse / dcol, vec3(0.3333));',
+    'float bnd = 0.3 + 0.7 * smoothstep(0.05, 0.35, li) + 0.15 * smoothstep(0.8, 1.1, li);',
+    'reflectedLight.directDiffuse = diffuseColor.rgb * bnd * mix(vec3(1.0), vec3(1.08, 0.97, 0.92), skinW);',
+    'reflectedLight.indirectSpecular += smoothstep(0.35, 0.7, frs) * 0.22 * (diffuseColor.rgb + 0.15);',
+  ] : [];
+  function outlineMaterial() {
+    const m = new THREE.MeshBasicMaterial({ skinning: true, color: col(ST.ink), side: THREE.BackSide });
+    m.onBeforeCompile = sh => { sh.vertexShader = sh.vertexShader.replace('#include <begin_vertex>', 'vec3 transformed = position + normal * ' + ST.outline.toFixed(4) + ';'); };
+    return m;
+  }
   function skinMaterial(suitHex) {
-    const m = new THREE.MeshStandardMaterial({ skinning: true, roughness: 0.6, metalness: 0, color: 0xffffff, envMapIntensity: 0.45 });
+    const m = new THREE.MeshStandardMaterial({ skinning: true, roughness: 0.6, metalness: 0, color: 0xffffff, envMapIntensity: ST.env });
     m.extensions = { derivatives: true };
     const U = {
-      uSkin: { value: col('#C99C82') }, uSuit: { value: col(suitHex) }, uHair: { value: col('#241914') },
-      uRough: { value: new THREE.Vector3(0.5, 0.74, 0.34) }, uSheen: { value: 0.0 },
+      uSkin: { value: col(ST.skin) }, uSuit: { value: suitCol(suitHex) }, uHair: { value: col(ST.hair) },
+      uRough: { value: new THREE.Vector3(...ST.rough) }, uSheen: { value: 0.0 }, uPants: { value: ST.pants },
     };
     m.userData.U = U;
     m.onBeforeCompile = sh => {
@@ -74,7 +104,7 @@ const MANNEQUIN = (function () {
         .replace('#include <common>', '#include <common>\nattribute vec3 aReg;\nvarying vec3 vReg;')
         .replace('#include <begin_vertex>', '#include <begin_vertex>\nvReg = aReg;');
       sh.fragmentShader = sh.fragmentShader
-        .replace('#include <common>', '#include <common>\nuniform vec3 uSkin;\nuniform vec3 uSuit;\nuniform vec3 uHair;\nuniform vec3 uRough;\nvarying vec3 vReg;\nfloat gSuit; float gHair;')
+        .replace('#include <common>', '#include <common>\nuniform vec3 uSkin;\nuniform vec3 uSuit;\nuniform vec3 uHair;\nuniform vec3 uRough;\nuniform float uPants;\nvarying vec3 vReg;\nfloat gSuit; float gHair;')
         .replace('#include <color_fragment>', [
           '#include <color_fragment>',
           'float fwS = max(fwidth(vReg.x) * 1.2, 0.002);',
@@ -85,8 +115,8 @@ const MANNEQUIN = (function () {
           'float fwP = max(fwidth(vReg.z) * 1.2, 0.002);',
           'float gPants = smoothstep(0.5 - fwP, 0.5 + fwP, vReg.z);',
           'float band = 1.0 - smoothstep(0.0, fwP * 4.0, abs(vReg.z - 0.62));',
-          'vec3 pantsCol = uSuit * 0.42 + vec3(0.012, 0.011, 0.014);',
-          'vec3 cloth = mix(uSuit, pantsCol, gPants) * (1.0 - 0.3 * band) * (1.0 - 0.25 * seam);',
+          'vec3 pantsCol = uSuit * uPants;',
+          'vec3 cloth = mix(uSuit, pantsCol, gPants) * (1.0 - 0.3 * band)' + (ST.toon ? ';' : ' * (1.0 - 0.25 * seam);'),
           'vec3 cc = mix(uSkin, cloth, gSuit);',
           'cc = mix(cc, uHair, gHair);',
           'diffuseColor.rgb *= cc;',
@@ -97,7 +127,7 @@ const MANNEQUIN = (function () {
           'float skinW = (1.0 - gSuit) * (1.0 - gHair);',
           'reflectedLight.indirectSpecular += frs * (gSuit * (uSuit * 0.55 + 0.04) + skinW * uSkin * 0.18);',
           'reflectedLight.directDiffuse *= mix(vec3(1.0), vec3(1.04, 0.98, 0.95), skinW);',
-        ].join('\n'))
+        ].concat(TOON).join('\n'))
         .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = mix(mix(uRough.x, uRough.y, gSuit), uRough.z, gHair);');
     };
     return m;
@@ -120,8 +150,14 @@ const MANNEQUIN = (function () {
       this.body = new THREE.SkinnedMesh(bodyGeo, this.material);
       this.body.bind(this.skeleton, new THREE.Matrix4());
       this.body.frustumCulled = false;
-      this.body.castShadow = true; this.body.receiveShadow = true;
+      this.body.castShadow = true; this.body.receiveShadow = !ST.toon;
       this.group.add(this.body);
+      this.outlines = [];
+      if (ST.outline > 0) {
+        this.olMat = outlineMaterial();
+        const ol = new THREE.SkinnedMesh(bodyGeo, this.olMat); ol.bind(this.skeleton, new THREE.Matrix4()); ol.frustumCulled = false;
+        this.group.add(ol); this.outlines.push(ol);
+      }
       this.shoes = [0, 1].map(side => {
         const bones = [new THREE.Bone(), new THREE.Bone()];
         const sk = new THREE.Skeleton(bones, shoeRestInv[kind]);
@@ -129,14 +165,16 @@ const MANNEQUIN = (function () {
         m.bind(sk, new THREE.Matrix4());
         m.frustumCulled = false; m.castShadow = true;
         this.group.add(m);
+        if (this.olMat) { const o = new THREE.SkinnedMesh(shoeGeo[kind][side], this.olMat); o.bind(sk, new THREE.Matrix4()); o.frustumCulled = false; this.group.add(o); this.outlines.push(o); }
         return { mesh: m, bones };
       });
       this._m = new THREE.Matrix4();
     }
-    setSuit(hex) { this.material.userData.U.uSuit.value.copy(col(hex)); }
+    setSuit(hex) { this.material.userData.U.uSuit.value.copy(suitCol(hex)); }
     setXray(on) {
       this.material.transparent = on; this.material.opacity = on ? 0.42 : 1; this.material.depthWrite = !on; this.material.needsUpdate = true;
       this.body.castShadow = !on;
+      this.outlines.forEach(o => { o.visible = !on; });
       this.shoes.forEach(s => {
         if (on && !s.xmat) { s.xmat = s.mesh.material.clone(); s.xmat.transparent = true; s.xmat.opacity = 0.5; s.xmat.depthWrite = false; }
         s.mesh.material = on ? s.xmat : shoeMaterial(this.kind);
@@ -158,7 +196,7 @@ const MANNEQUIN = (function () {
         frameMatrix({ o: mo, x: B.l, y: sub(mul(B.u, ct), mul(B.f, st)), z: add(mul(B.u, st), mul(B.f, ct)) }, bs[1].matrixWorld);
       });
     }
-    dispose() { this.material.dispose(); this.shoes.forEach(s => { if (s.xmat) s.xmat.dispose(); }); }
+    dispose() { this.material.dispose(); if (this.olMat) this.olMat.dispose(); this.shoes.forEach(s => { if (s.xmat) s.xmat.dispose(); }); }
   }
 
   // ponytail: chain follows the head with lag (deterministic in time)
@@ -179,5 +217,5 @@ const MANNEQUIN = (function () {
     return pts;
   }
 
-  return { Mannequin, ponyChain, init };
+  return { Mannequin, ponyChain, init, STYLE: STYLE_NAME };
 })();

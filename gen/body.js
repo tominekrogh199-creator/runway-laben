@@ -48,27 +48,13 @@ for (const s of [1, -1]) U(neck, rc([0.045 * s, 1.612, -0.012], [0.014 * s, 1.46
 const Hc = P3(R.head);
 const hp = v => vadd(Hc, v);
 const head = part('head', 0.016);
-// sculpted mannequin head: few large, softly blended forms (no small lumps)
+// stylized faceless head: smooth egg cranium, soft jaw, a whisper of a nose ridge
 U(head, ell(hp([0, 0.018, -0.012]), [0.073, 0.088, 0.095]), 'head');
-U(head, ell(hp([0, 0.03, 0.035]), [0.066, 0.06, 0.055]), 'head', 0.03);
-U(head, ell(hp([0, -0.022, 0.03]), [0.059, 0.07, 0.066]), 'head', 0.035);
-U(head, ell(hp([0, -0.07, 0.042]), [0.043, 0.042, 0.05]), 'head', 0.035);
-for (const s of [1, -1]) {
-  U(head, rc(hp([0.054 * s, -0.025, -0.008]), hp([0.024 * s, -0.096, 0.058]), 0.021, 0.016), 'head', 0.035);
-  U(head, ell(hp([0.044 * s, -0.012, 0.066]), [0.021, 0.014, 0.019]), 'head', 0.03);
-}
-U(head, ell(hp([0, -0.104, 0.07]), [0.017, 0.014, 0.015]), 'head', 0.025);
-for (const s of [1, -1]) U(head, ell(hp([0.056 * s, -0.004, 0.022]), [0.017, 0.035, 0.035]), 'head', 0.03);
-U(head, rc(hp([-0.038, 0.027, 0.083]), hp([0.038, 0.027, 0.083]), 0.0105, 0.0105, { w: [0, 1, 0], s: 0.6 }), 'head', 0.026);
-for (const s of [1, -1]) U(head, ell(hp([0.03 * s, 0.004, 0.099]), [0.019, 0.011, 0.012]), 'head', 0.018, 's');
-for (const s of [1, -1]) U(head, ell(hp([0.03 * s, 0.003, 0.087]), [0.0145, 0.0075, 0.0085]), 'head', 0.007);
-U(head, rc(hp([0, 0.014, 0.09]), hp([0, -0.028, 0.107]), 0.0062, 0.0088, { w: [1, 0, 0], s: 0.75 }), 'head', 0.013);
-U(head, ell(hp([0, -0.032, 0.105]), [0.0105, 0.009, 0.0105]), 'head', 0.008);
-for (const s of [1, -1]) U(head, ell(hp([0.0105 * s, -0.037, 0.097]), [0.0075, 0.0068, 0.0075]), 'head', 0.007);
-U(head, ell(hp([0, -0.056, 0.093]), [0.0175, 0.0058, 0.0072]), 'head', 0.009);
-U(head, ell(hp([0, -0.068, 0.0905]), [0.0145, 0.0068, 0.0078]), 'head', 0.009);
-U(head, ell(hp([0, -0.0615, 0.1]), [0.0165, 0.0011, 0.007]), 'head', 0.002, 's');
-for (const s of [1, -1]) U(head, ell(hp([0.073 * s, -0.005, -0.006]), [0.009, 0.03, 0.018]), 'head', 0.006);
+U(head, ell(hp([0, 0.03, 0.035]), [0.066, 0.06, 0.055]), 'head', 0.04);
+U(head, ell(hp([0, -0.025, 0.03]), [0.058, 0.07, 0.064]), 'head', 0.05);
+U(head, ell(hp([0, -0.072, 0.04]), [0.04, 0.042, 0.048]), 'head', 0.05);
+U(head, ell(hp([0, -0.1, 0.064]), [0.017, 0.015, 0.016]), 'head', 0.04);
+U(head, rc(hp([0, 0.01, 0.09]), hp([0, -0.03, 0.1]), 0.006, 0.008, { w: [1, 0, 0], s: 0.7 }), 'head', 0.03);
 // sleek hair: a shell over the skull, cut at the hairline
 const hairline = (y, z) => 0.9 * z - 0.008;
 function smoothstep(a, b, x) { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); }
