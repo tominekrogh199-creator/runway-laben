@@ -39,7 +39,7 @@ const MANNEQUIN = (function () {
     bodyGeo = buildGeometry(B, false);
     bodyGeo.setAttribute('skinIndex', new THREE.BufferAttribute(dec(B.si, Uint8Array), 4));
     bodyGeo.setAttribute('skinWeight', new THREE.BufferAttribute(dec(B.sw, Uint8Array), 4, true));
-    bodyGeo.setAttribute('aReg', new THREE.BufferAttribute(dec(B.reg, Uint8Array), 2, true));
+    bodyGeo.setAttribute('aReg', new THREE.BufferAttribute(dec(B.reg, Uint8Array), 3, true));
     const RF = boneFrames(restPose(), 0);
     restInv = RF.map(F => frameMatrix(F, new THREE.Matrix4()).invert());
     shoeGeo = {};
@@ -71,10 +71,10 @@ const MANNEQUIN = (function () {
     m.onBeforeCompile = sh => {
       Object.assign(sh.uniforms, U);
       sh.vertexShader = sh.vertexShader
-        .replace('#include <common>', '#include <common>\nattribute vec2 aReg;\nvarying vec2 vReg;')
+        .replace('#include <common>', '#include <common>\nattribute vec3 aReg;\nvarying vec3 vReg;')
         .replace('#include <begin_vertex>', '#include <begin_vertex>\nvReg = aReg;');
       sh.fragmentShader = sh.fragmentShader
-        .replace('#include <common>', '#include <common>\nuniform vec3 uSkin;\nuniform vec3 uSuit;\nuniform vec3 uHair;\nuniform vec3 uRough;\nvarying vec2 vReg;\nfloat gSuit; float gHair;')
+        .replace('#include <common>', '#include <common>\nuniform vec3 uSkin;\nuniform vec3 uSuit;\nuniform vec3 uHair;\nuniform vec3 uRough;\nvarying vec3 vReg;\nfloat gSuit; float gHair;')
         .replace('#include <color_fragment>', [
           '#include <color_fragment>',
           'float fwS = max(fwidth(vReg.x) * 1.2, 0.002);',
@@ -82,7 +82,12 @@ const MANNEQUIN = (function () {
           'gSuit = smoothstep(0.5 - fwS, 0.5 + fwS, vReg.x);',
           'gHair = smoothstep(0.5 - fwH, 0.5 + fwH, vReg.y);',
           'float seam = 1.0 - smoothstep(0.0, fwS * 3.0, abs(vReg.x - 0.53));',
-          'vec3 cc = mix(uSkin, uSuit * (1.0 - 0.25 * seam * gSuit), gSuit);',
+          'float fwP = max(fwidth(vReg.z) * 1.2, 0.002);',
+          'float gPants = smoothstep(0.5 - fwP, 0.5 + fwP, vReg.z);',
+          'float band = 1.0 - smoothstep(0.0, fwP * 4.0, abs(vReg.z - 0.62));',
+          'vec3 pantsCol = uSuit * 0.42 + vec3(0.012, 0.011, 0.014);',
+          'vec3 cloth = mix(uSuit, pantsCol, gPants) * (1.0 - 0.3 * band) * (1.0 - 0.25 * seam);',
+          'vec3 cc = mix(uSkin, cloth, gSuit);',
           'cc = mix(cc, uHair, gHair);',
           'diffuseColor.rgb *= cc;',
         ].join('\n'))

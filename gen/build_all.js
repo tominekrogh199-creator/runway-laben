@@ -32,11 +32,12 @@ async function buildBody() {
     const raw = S.mesh(B.bodySDF, [-0.46, -0.004, -0.24], [0.46, 1.83, 0.27], H);
     console.log('body raw', raw.pos.length / 3, 's', (Date.now() - t0) / 1000);
     const nv = raw.pos.length / 3;
-    const attr = new Float32Array(nv * 2);
+    const attr = new Float32Array(nv * 3);
     for (let v = 0; v < nv; v++) {
       const x = raw.pos[v * 3], y = raw.pos[v * 3 + 1], z = raw.pos[v * 3 + 2];
-      attr[v * 2] = Math.max(-1, Math.min(1, B.suitField(x, y, z) / 0.01));
-      attr[v * 2 + 1] = Math.max(-1, Math.min(1, B.hairField(x, y, z) / 0.006));
+      attr[v * 3] = Math.max(-1, Math.min(1, B.suitField(x, y, z) / 0.01));
+      attr[v * 3 + 1] = Math.max(-1, Math.min(1, B.hairField(x, y, z) / 0.006));
+      attr[v * 3 + 2] = Math.max(-1, Math.min(1, B.pantsField(x, y, z) / 0.01));
     }
     // magnify small detailed parts so the simplifier keeps more of them
     const P2 = new Float32Array(raw.pos);
@@ -50,7 +51,7 @@ async function buildBody() {
       if (sc !== 1) { P2[v * 3] = x * sc; P2[v * 3 + 1] = y * sc; P2[v * 3 + 2] = z * sc; }
     }
     void Hc;
-    const [sidx] = MeshoptSimplifier.simplifyWithAttributes(raw.idx, P2, 3, attr, 2, [0.006, 0.01], null, 0, ERR, ['ErrorAbsolute']);
+    const [sidx] = MeshoptSimplifier.simplifyWithAttributes(raw.idx, P2, 3, attr, 3, [0.006, 0.01, 0.006], null, 0, ERR, ['ErrorAbsolute']);
     const c = S.compact(raw.pos, sidx);
     pos = c.pos; idx = c.idx;
     fs.writeFileSync('body_pos.bin', Buffer.from(pos.buffer));
@@ -139,7 +140,7 @@ async function buildBody() {
     });
   }
   // regions
-  const reg = new Uint8Array(nv * 2);
+  const reg = new Uint8Array(nv * 3);
   for (let v = 0; v < nv; v++) {
     const x = pos[v * 3], y = pos[v * 3 + 1], z = pos[v * 3 + 2];
     let arm = 0, ponyW = 0, headW = 0;
@@ -154,8 +155,9 @@ async function buildBody() {
     let hair = 0.5 + B.hairField(x, y, z) / 0.006;
     if (headW + ponyW < 0.3) hair = 0;
     if (ponyW > 0.5) hair = 1;
-    reg[v * 2] = Math.round(Math.max(0, Math.min(1, suit)) * 255);
-    reg[v * 2 + 1] = Math.round(Math.max(0, Math.min(1, hair)) * 255);
+    reg[v * 3] = Math.round(Math.max(0, Math.min(1, suit)) * 255);
+    reg[v * 3 + 1] = Math.round(Math.max(0, Math.min(1, hair)) * 255);
+    reg[v * 3 + 2] = Math.round(Math.max(0, Math.min(1, 0.5 + B.pantsField(x, y, z) / 0.008)) * 255);
   }
   const q = new Int16Array(nv * 3);
   for (let i = 0; i < nv * 3; i++) q[i] = Math.round(pos[i] * 16000);
@@ -165,7 +167,7 @@ async function buildBody() {
 
 function buildShoe(kind) {
   const { sdf, sh, M } = SH.makeShoeSDF(kind);
-  const raw = S.mesh(sdf, [-0.07, -0.003, -0.11], [0.07, 0.2, 0.26], 0.0022, { project: 3 });
+  const raw = S.mesh(sdf, [-0.07, -0.003, -0.11], [0.07, 0.2, 0.26], 0.0016, { project: 3 });
   const [sidx] = MeshoptSimplifier.simplify(raw.idx, raw.pos, 3, 0, 0.00025, ['ErrorAbsolute']);
   const c = S.compact(raw.pos, sidx);
   const pos = c.pos, nv = pos.length / 3;

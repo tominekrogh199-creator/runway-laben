@@ -101,11 +101,11 @@
 
   // ---------- cameras ----------
   const CAMS = {
-    front: { az: 0, el: 5, fov: 30 },
-    side: { az: 90, el: 4, fov: 30 },
-    back: { az: 180, el: 7, fov: 30 },
+    front: { az: 0, el: 3, fov: 24 },
+    side: { az: 90, el: 3, fov: 26 },
+    back: { az: 180, el: 6, fov: 26 },
     top: { az: 0, el: 58, fov: 40, ty: 0.2, fixed: 4.2, lead: -0.5 },
-    threeq: { az: 38, el: 11, fov: 30 },
+    threeq: { az: 34, el: 7, fov: 26 },
     low: { az: 18, el: -8, fov: 70, ty: 0.45, fixed: 2.2 },
     eye: { az: 18, el: 4, fov: 30 },
     tele: { az: 18, el: 3, fov: 7 },

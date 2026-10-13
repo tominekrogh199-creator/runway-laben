@@ -48,23 +48,26 @@ for (const s of [1, -1]) U(neck, rc([0.045 * s, 1.612, -0.012], [0.014 * s, 1.46
 const Hc = P3(R.head);
 const hp = v => vadd(Hc, v);
 const head = part('head', 0.016);
+// sculpted mannequin head: few large, softly blended forms (no small lumps)
 U(head, ell(hp([0, 0.018, -0.012]), [0.073, 0.088, 0.095]), 'head');
 U(head, ell(hp([0, 0.03, 0.035]), [0.066, 0.06, 0.055]), 'head', 0.03);
-U(head, ell(hp([0, -0.018, 0.032]), [0.059, 0.06, 0.068]), 'head', 0.03);
-U(head, ell(hp([0, -0.06, 0.034]), [0.045, 0.05, 0.053]), 'head', 0.03);
+U(head, ell(hp([0, -0.022, 0.03]), [0.059, 0.07, 0.066]), 'head', 0.035);
+U(head, ell(hp([0, -0.07, 0.042]), [0.043, 0.042, 0.05]), 'head', 0.035);
 for (const s of [1, -1]) {
-  U(head, ell(hp([0.046 * s, -0.007, 0.054]), [0.02, 0.014, 0.02]), 'head', 0.02);
-  U(head, ell(hp([0.035 * s, -0.043, 0.058]), [0.015, 0.019, 0.015]), 'head', 0.022);
-  U(head, rc(hp([0.049 * s, -0.045, -0.008]), hp([0.018 * s, -0.098, 0.063]), 0.0135, 0.012), 'head', 0.024);
-  U(head, rc(hp([0.008 * s, 0.026, 0.088]), hp([0.049 * s, 0.024, 0.071]), 0.0085, 0.0075), 'head', 0.014);
+  U(head, rc(hp([0.054 * s, -0.025, -0.008]), hp([0.024 * s, -0.096, 0.058]), 0.021, 0.016), 'head', 0.035);
+  U(head, ell(hp([0.044 * s, -0.012, 0.066]), [0.021, 0.014, 0.019]), 'head', 0.03);
 }
-U(head, ell(hp([0, -0.102, 0.07]), [0.018, 0.016, 0.016]), 'head', 0.02);
-// mannequin face: soft eye sockets only, no lids
-for (const s of [1, -1]) U(head, ell(hp([0.031 * s, 0.004, 0.1]), [0.019, 0.011, 0.012]), 'head', 0.02, 's');
-U(head, rc(hp([0, 0.014, 0.088]), hp([0, -0.028, 0.107]), 0.0068, 0.0085, { w: [1, 0, 0], s: 0.8 }), 'head', 0.012);
-U(head, ell(hp([0, -0.033, 0.105]), [0.0105, 0.0095, 0.011]), 'head', 0.007);
-for (const s of [1, -1]) U(head, ell(hp([0.0108 * s, -0.038, 0.097]), [0.0072, 0.0068, 0.0078]), 'head', 0.006);
-U(head, ell(hp([0, -0.061, 0.087]), [0.015, 0.0075, 0.0065]), 'head', 0.016);
+U(head, ell(hp([0, -0.104, 0.07]), [0.017, 0.014, 0.015]), 'head', 0.025);
+for (const s of [1, -1]) U(head, ell(hp([0.056 * s, -0.004, 0.022]), [0.017, 0.035, 0.035]), 'head', 0.03);
+U(head, rc(hp([-0.038, 0.027, 0.083]), hp([0.038, 0.027, 0.083]), 0.0105, 0.0105, { w: [0, 1, 0], s: 0.6 }), 'head', 0.026);
+for (const s of [1, -1]) U(head, ell(hp([0.03 * s, 0.004, 0.099]), [0.019, 0.011, 0.012]), 'head', 0.018, 's');
+for (const s of [1, -1]) U(head, ell(hp([0.03 * s, 0.003, 0.087]), [0.0145, 0.0075, 0.0085]), 'head', 0.007);
+U(head, rc(hp([0, 0.014, 0.09]), hp([0, -0.028, 0.107]), 0.0062, 0.0088, { w: [1, 0, 0], s: 0.75 }), 'head', 0.013);
+U(head, ell(hp([0, -0.032, 0.105]), [0.0105, 0.009, 0.0105]), 'head', 0.008);
+for (const s of [1, -1]) U(head, ell(hp([0.0105 * s, -0.037, 0.097]), [0.0075, 0.0068, 0.0075]), 'head', 0.007);
+U(head, ell(hp([0, -0.056, 0.093]), [0.0175, 0.0058, 0.0072]), 'head', 0.009);
+U(head, ell(hp([0, -0.068, 0.0905]), [0.0145, 0.0068, 0.0078]), 'head', 0.009);
+U(head, ell(hp([0, -0.0615, 0.1]), [0.0165, 0.0011, 0.007]), 'head', 0.002, 's');
 for (const s of [1, -1]) U(head, ell(hp([0.073 * s, -0.005, -0.006]), [0.009, 0.03, 0.018]), 'head', 0.006);
 // sleek hair: a shell over the skull, cut at the hairline
 const hairline = (y, z) => 0.9 * z - 0.008;
@@ -192,14 +195,15 @@ function suitField(x, y, z) {
   const ax = Math.abs(x);
   const fz = smoothstep(-0.05, 0.06, z);
   const sh = smoothstep(0.03, 0.09, ax);
-  const fNeck = ((1.47 + 0.03 * sh) * (1 - fz) + (1.405 + 0.09 * sh) * fz) - y;
-  const lf = 0.866 + 0.1 * smoothstep(0.0, 0.15, ax), lb = 0.842 + 0.05 * smoothstep(0.0, 0.16, ax);
-  const fLeg = y - (lb + (lf - lb) * smoothstep(-0.07, 0.02, z));
-  const ex = (ax - 0.206) / 0.082, ey = (y - 1.36) / 0.15;
+  const fNeck = ((1.505 + 0.0 * sh) * (1 - fz) + (1.48 + 0.0 * sh) * fz) - y;   // mock neck
+  const fAnkle = y - 0.125;                                                     // cropped at the ankle
+  const ex = (ax - 0.2) / 0.075, ey = (y - 1.37) / 0.13;
   const s1 = (Math.sqrt(ex * ex + ey * ey) - 1) * 0.09;
-  const fArm = Math.min(s1, Math.max(0.205 - ax, y - 1.36));
-  return Math.min(fNeck, fLeg, fArm);
+  const fArm = Math.min(s1, Math.max(0.2 - ax, y - 1.37));                      // sleeveless, cut-in shoulders
+  return Math.min(fNeck, fAnkle, fArm);
 }
+// trousers part of the outfit (below a high waistband)
+function pantsField(x, y, z) { return (1.035 + 0.012 * smoothstep(-0.06, 0.06, -z)) - y; }
 const earE = [1, -1].map(s => ell(hp([0.073 * s, -0.005, -0.006]), [0.009, 0.03, 0.018]));
 function hairField(x, y, z) {
   const ly = y - Hc[1], lz = z - Hc[2];
@@ -209,4 +213,4 @@ function hairField(x, y, z) {
   return f;
 }
 
-module.exports = { parts, bodySDF, boneDist, suitField, hairField, Hc, NB, BI, R, smoothstep };
+module.exports = { parts, bodySDF, boneDist, suitField, pantsField, hairField, Hc, NB, BI, R, smoothstep };

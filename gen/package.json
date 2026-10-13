@@ -4,8 +4,8 @@
   "description": "Genererer 3D-kroppen og skoene til Runway-laben (meshdata.js)",
   "main": "build_all.js",
   "scripts": {
-    "build": "node build_all.js 0.0035 0.0004",
-    "build:reuse": "node build_all.js 0.0035 0.0004 reuse"
+    "build": "node build_all.js 0.0027 0.00028",
+    "build:reuse": "node build_all.js 0.0027 0.00028 reuse"
   },
   "dependencies": {
     "meshoptimizer": "0.21.0"

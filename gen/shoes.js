@@ -33,7 +33,7 @@ function makeShoeSDF(kind) {
   }
   const heel = kind === 'heel';
   const toeBox = heel
-    ? rc([0, M[1] - 0.005, M[2] + 0.03], [0, 0.011, sh.toe.z + 0.004], 0.031, 0.0035, { w: [0, 1, 0], s: 0.5 })
+    ? rc([0, M[1] - 0.005, M[2] + 0.03], [0, 0.009, sh.toe.z + 0.018], 0.03, 0.002, { w: [0, 1, 0], s: 0.45 })
     : rc([0, M[1] - 0.006, M[2] + 0.03], [0, 0.012, sh.toe.z - 0.004], 0.031, 0.013, { w: [0, 1, 0], s: 0.62 });
   const topline = zl => heel
     ? 0.056 - 0.032 * sm(-0.045, 0.0, zl) + 0.08 * sm(0.07, 0.108, zl)
@@ -45,7 +45,7 @@ function makeShoeSDF(kind) {
     const cut = f[1] - (-E.G.ankleH + topline(f[2]));
     return S.smaxP(d, cut, 0.002);
   }
-  const stil = heel ? rc([0, 0.088, -0.021], [0, 0.0, -0.025], 0.0135, 0.0042, { w: [1, 0, 0], s: 0.85 }) : null;
+  const stil = heel ? rc([0, 0.088, -0.021], [0, 0.0, -0.027], 0.0105, 0.0032, { w: [1, 0, 0], s: 0.85 }) : null;
   const heelCap = heel ? ell([0, 0.087, -0.02], [0.021, 0.011, 0.025]) : null;
   function sdf(x, y, z) {
     let d = upper(x, y, z);
@@ -63,6 +63,14 @@ function makeShoeSDF(kind) {
       sole = Math.max(upper(x, 0.013, z) - 0.0006, Math.abs(y - 0.0045) - 0.0045);
     }
     d = S.sminP(d, sole, 0.003);
+    if (heel) {
+      // pointed almond toe in plan and profile
+      const tz = sh.toe.z + 0.018, u = Math.min(1, Math.max(0, (tz - z) / 0.115));
+      const hw = 0.052 * Math.sqrt(u);
+      d = S.smaxP(d, Math.abs(x + 0.004 * (1 - u)) - hw, 0.006);
+      const ht = 0.01 + 0.085 * Math.pow(u, 0.85) + 1.0 * (1 - sm(M[2] - 0.05, M[2] - 0.01, z));
+      d = S.smaxP(d, y - ht, 0.01);
+    }
     return Math.max(d, -y);
   }
   return { sdf, sh, M };
