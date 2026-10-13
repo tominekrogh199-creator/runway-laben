@@ -25,35 +25,65 @@
   }
   renderer.outputEncoding = THREE.sRGBEncoding;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.0;
+  renderer.toneMappingExposure = 0.92;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
   const col = h => new THREE.Color(h).convertSRGBToLinear();
-  const STAGE_BG = '#0E0C12';
+  const STAGE_BG = '#0C0B0E';
+  const MOBILE = Math.min(screen.width, screen.height) < 700;
   const scene = new THREE.Scene();
   scene.background = col(STAGE_BG);
-  scene.fog = new THREE.Fog(col(STAGE_BG), 8, 24);
+  scene.fog = new THREE.Fog(col(STAGE_BG), 9, 26);
 
-  scene.add(new THREE.HemisphereLight(col('#E8E4F0'), col('#1A1620'), 0.55));
-  const key = new THREE.DirectionalLight(col('#FFF1E4'), 2.1);
+  // soft studio environment (procedural softboxes, prefiltered once)
+  (function studioEnv() {
+    const env = new THREE.Scene();
+    env.background = col('#141218');
+    const box = (w, h, x, y, z, c, ry) => {
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: col(c), side: THREE.DoubleSide }));
+      m.position.set(x, y, z); m.lookAt(0, 1, 0); env.add(m);
+    };
+    box(6, 3, 0, 7, 4, '#FFF4EA');      // big overhead key softbox (front)
+    box(2.2, 6, -6, 2.5, -1, '#C9D4FF'); // cool strip (left back)
+    box(2.2, 6, 6, 2.5, -2, '#FFE2EC');  // warm strip (right back)
+    box(8, 1.5, 0, -1.5, 5, '#1E1B22');  // floor bounce
+    const pm = new THREE.PMREMGenerator(renderer);
+    scene.environment = pm.fromScene(env, 0.04).texture;
+    pm.dispose();
+  })();
+
+  // backdrop: vertical gradient haze behind the runway
+  (function backdrop() {
+    const c = document.createElement('canvas'); c.width = 4; c.height = 256;
+    const g = c.getContext('2d'), gr = g.createLinearGradient(0, 0, 0, 256);
+    gr.addColorStop(0, '#060507'); gr.addColorStop(0.5, '#1A1720'); gr.addColorStop(0.78, '#2A2531'); gr.addColorStop(1, '#0C0B0E');
+    g.fillStyle = gr; g.fillRect(0, 0, 4, 256);
+    const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding;
+    scene.background = t;
+  })();
+
+  scene.add(new THREE.HemisphereLight(col('#F2EEF6'), col('#201C24'), 0.32));
+  const key = new THREE.DirectionalLight(col('#FFF3E8'), 1.6);
   key.castShadow = true;
-  key.shadow.mapSize.set(1024, 1024);
+  key.shadow.mapSize.set(MOBILE ? 1024 : 2048, MOBILE ? 1024 : 2048);
+  key.shadow.radius = 4;
   key.shadow.bias = -0.0004;
   key.shadow.normalBias = 0.012;
   Object.assign(key.shadow.camera, { left: -1.3, right: 1.3, top: 1.3, bottom: -1.3, near: 0.5, far: 9 });
   scene.add(key); scene.add(key.target);
-  const rim = new THREE.DirectionalLight(col('#9DB0FF'), 0.9); rim.position.set(-3, 3, -4); scene.add(rim);
-  const fill = new THREE.DirectionalLight(col('#FFD9E8'), 0.35); fill.position.set(-2, 1.4, 3); scene.add(fill);
+  const rim = new THREE.DirectionalLight(col('#B4C2FF'), 1.3); rim.position.set(-3, 3.5, -4); scene.add(rim);
+  const rim2 = new THREE.DirectionalLight(col('#FFD6C4'), 0.8); rim2.position.set(3.5, 2.5, -3.5); scene.add(rim2);
+  const fill = new THREE.DirectionalLight(col('#FFE6EE'), 0.3); fill.position.set(-2, 1.4, 3); scene.add(fill);
 
   // ---------- floor ----------
   function floorTexture() {
     const c = document.createElement('canvas'); c.width = 640; c.height = 512;
     const g = c.getContext('2d');
-    g.fillStyle = '#131117'; g.fillRect(0, 0, 640, 512);
+    g.fillStyle = '#0F0E11'; g.fillRect(0, 0, 640, 512);
     const px = 64, cx = 320, hw = 1.1 * px;
-    g.fillStyle = '#211E27'; g.fillRect(cx - hw, 0, hw * 2, 512);
-    g.fillStyle = '#3E3948'; g.fillRect(cx - hw - 1, 0, 2, 512); g.fillRect(cx + hw - 1, 0, 2, 512);
+    g.fillStyle = '#1E1C21'; g.fillRect(cx - hw, 0, hw * 2, 512);
+    g.fillStyle = '#4A4550'; g.fillRect(cx - hw - 1, 0, 2, 512); g.fillRect(cx + hw - 1, 0, 2, 512);
     g.fillStyle = '#4E4858';
     for (let y = 0; y < 512; y += 32) { const L = y % 64 === 0 ? 14 : 8; g.fillRect(cx - hw, y, L, 2); g.fillRect(cx + hw - L, y, L, 2); }
     const t = new THREE.CanvasTexture(c);
@@ -62,7 +92,7 @@
     t.encoding = THREE.sRGBEncoding;
     return t;
   }
-  const floor = new THREE.Mesh(new THREE.PlaneGeometry(10, 40), new THREE.MeshStandardMaterial({ map: floorTexture(), roughness: 0.82, metalness: 0.0 }));
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(10, 40), new THREE.MeshStandardMaterial({ map: floorTexture(), roughness: 0.74, metalness: 0.0, envMapIntensity: 0.12 }));
   floor.rotation.x = -Math.PI / 2;
   floor.receiveShadow = true;
   scene.add(floor);

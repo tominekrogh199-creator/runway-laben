@@ -61,11 +61,11 @@ const MANNEQUIN = (function () {
   }
 
   function skinMaterial(suitHex) {
-    const m = new THREE.MeshStandardMaterial({ skinning: true, roughness: 0.55, metalness: 0, color: 0xffffff });
+    const m = new THREE.MeshStandardMaterial({ skinning: true, roughness: 0.6, metalness: 0, color: 0xffffff, envMapIntensity: 0.45 });
     m.extensions = { derivatives: true };
     const U = {
-      uSkin: { value: col('#C9967A') }, uSuit: { value: col(suitHex) }, uHair: { value: col('#2A1D17') },
-      uRough: { value: new THREE.Vector3(0.52, 0.42, 0.32) }, uSheen: { value: 0.0 },
+      uSkin: { value: col('#C99C82') }, uSuit: { value: col(suitHex) }, uHair: { value: col('#241914') },
+      uRough: { value: new THREE.Vector3(0.5, 0.74, 0.34) }, uSheen: { value: 0.0 },
     };
     m.userData.U = U;
     m.onBeforeCompile = sh => {
@@ -86,6 +86,13 @@ const MANNEQUIN = (function () {
           'cc = mix(cc, uHair, gHair);',
           'diffuseColor.rgb *= cc;',
         ].join('\n'))
+        .replace('#include <lights_fragment_end>', [
+          '#include <lights_fragment_end>',
+          'float frs = pow(1.0 - saturate(dot(geometry.normal, geometry.viewDir)), 3.0);',
+          'float skinW = (1.0 - gSuit) * (1.0 - gHair);',
+          'reflectedLight.indirectSpecular += frs * (gSuit * (uSuit * 0.55 + 0.04) + skinW * uSkin * 0.18);',
+          'reflectedLight.directDiffuse *= mix(vec3(1.0), vec3(1.04, 0.98, 0.95), skinW);',
+        ].join('\n'))
         .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = mix(mix(uRough.x, uRough.y, gSuit), uRough.z, gHair);');
     };
     return m;
@@ -93,7 +100,7 @@ const MANNEQUIN = (function () {
 
   const SHOE_MAT = {};
   function shoeMaterial(kind) {
-    if (!SHOE_MAT[kind]) SHOE_MAT[kind] = new THREE.MeshStandardMaterial({ skinning: true, color: col(kind === 'heel' ? '#141215' : '#1E1A1B'), roughness: kind === 'heel' ? 0.17 : 0.48, metalness: 0 });
+    if (!SHOE_MAT[kind]) SHOE_MAT[kind] = new THREE.MeshStandardMaterial({ skinning: true, color: col(kind === 'heel' ? '#0E0C0E' : '#1C1819'), roughness: kind === 'heel' ? 0.22 : 0.55, metalness: 0, envMapIntensity: 1.2 });
     return SHOE_MAT[kind];
   }
 
